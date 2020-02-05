@@ -21,7 +21,7 @@ function resetBoard()
 }
 
 #Assigning Symbol To Player
-function assignSymbolToPlayer()
+function assignSymbolAndToss()
 {
 	if [ $(( RANDOM%2 )) -eq 1 ]
 	then
@@ -33,4 +33,4 @@ function assignSymbolToPlayer()
 }
 
 resetBoard
-assignSymbolToPlayer
+assignSymbolAndToss
