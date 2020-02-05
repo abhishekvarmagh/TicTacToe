@@ -26,8 +26,10 @@ function assignSymbolAndToss()
 	if [ $(( RANDOM%2 )) -eq 1 ]
 	then
 		playerSymbol=x
+		playerTurn=true
 	else
 		playerSymbol=o
+		playerTurn=true
 	fi
 	echo "Assigned Symbol to Player is : " $playerSymbol
 }
