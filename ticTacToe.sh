@@ -10,6 +10,7 @@ TOTAL_MOVE=$(( ROW*COLUMN ))
 declare -A board
 
 moveCount=0
+playerTurn=false
 
 #Resetting the board
 function resetBoard()
@@ -18,23 +19,29 @@ function resetBoard()
 	do
    	for (( j=0; j<$COLUMN; j++ ))
    	do
-      	board[$i,$j]="-"
+			board[$i,$j]="-"
    	done
 	done
 }
 
-#Assigning Symbol To Player
+#Assigning Symbol To Players And Toss To Who Will Play First
 function assignSymbolAndToss()
 {
 	if [ $(( RANDOM%2 )) -eq 1 ]
 	then
-		playerSymbol=x
+		assignedSymbol x o
 		playerTurn=true
 	else
-		playerSymbol=o
-		playerTurn=true
+		assignedSymbol o x
 	fi
 	echo "Assigned Symbol to Player is : " $playerSymbol
+}
+
+#Assigned Symbol To Palyers
+function assignedSymbol
+{
+	playerSymbol=$1
+	computerSymbol=$2
 }
 
 #Display Board
@@ -64,6 +71,7 @@ function isEmpty()
 		checkWin $letter
 	else
 		echo "cell already occupied"
+		switchPlayer
 	fi
 }
 
@@ -96,6 +104,9 @@ function checkWin()
 	then
 		echo "Win"
 		exit
+	elif [ $moveCount -eq $TOTAL_MOVE ]
+	then
+		echo "Tie"
 	fi
 }
 
@@ -103,11 +114,29 @@ resetBoard
 assignSymbolAndToss
 displayBoard
 
+#Switching Player Function
+function switchPlayer()
+{
 while [ $moveCount -ne $TOTAL_MOVE ]
 do
 	if [[ $playerTurn == true ]]
 	then
-		read -p "Enter row and column number : " rowNumber columnNumber
+		read -p "Enter row (0-2) and column (0-2) number : " rowNumber columnNumber
+		if [[ $rowNumber -gt 2 || $columnNumber -gt 2 ]]
+		then
+			echo "Invalid row or column number entered"
+			switchPlayer
+		fi
 		isEmpty $rowNumber $columnNumber $playerSymbol
+		playerTurn=false
+	else
+		echo "Machine Turn"
+		getRowNumber=$(( RANDOM%3 ))
+		getColumnNumber=$(( RANDOM%3 ))
+		isEmpty $getRowNumber $getColumnNumber $computerSymbol
+		playerTurn=true
 	fi
 done
+}
+
+switchPlayer
