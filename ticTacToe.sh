@@ -53,15 +53,49 @@ function displayBoard()
 #To check whether cell is occupied or not
 function isEmpty()
 {
-	row=$1
-	column=$2
-	letter=$3
+	local row=$1
+	local column=$2
+	local letter=$3
 	if [[ ${board[$row,$column]} == "-" ]]
 	then
 		board[$row,$column]=$letter
+		displayBoard
 		moveCount=$(( moveCount+1 ))
+		checkWin $letter
 	else
 		echo "cell already occupied"
+	fi
+}
+
+#Checking All Winning Condition
+function checkWin()
+{
+	win=0
+	for (( i=0; i<$ROW; i++ ))
+	do
+		if [[ ${board[$i,$(( i-i ))]} == $1 && ${board[$i,$(( i+1-i ))]} == $1 && ${board[$i,$(( i+2-i))]} == $1 ]]
+		then
+			win=1
+		fi
+		if [[ ${board[$(( i-i )),$i]} == $1 && ${board[$(( i+1-i )),$i]} == $1 && ${board[$(( i+2-i )),$i]} == $1 ]]
+		then
+			win=1
+		fi
+	done
+
+	if [[ ${board[0,0]} == $1 && ${board[1,1]} == $1 && ${board[2,2]} == $1 ]]
+	then
+		win=1
+	fi
+	if [[ ${board[0,2]} == $1 && ${board[1,1]} == $1 && ${board[2,0]} == $1 ]]
+	then
+		win=1
+	fi
+
+	if [ $win -eq 1 ]
+	then
+		echo "Win"
+		exit
 	fi
 }
 
@@ -76,5 +110,4 @@ do
 		read -p "Enter row and column number : " rowNumber columnNumber
 		isEmpty $rowNumber $columnNumber $playerSymbol
 	fi
-	displayBoard
 done
