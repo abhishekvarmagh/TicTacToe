@@ -20,7 +20,7 @@ function resetBoard()
    	for (( j=0; j<$COLUMN; j++ ))
    	do
 			board[$i,$j]="-"
-   	done
+		done
 	done
 }
 
@@ -102,6 +102,7 @@ function checkWin()
 
 	if [ $win -eq 1 ]
 	then
+		displayBoard
 		echo "Win"
 		exit
 	elif [ $moveCount -eq $TOTAL_MOVE ]
@@ -113,6 +114,25 @@ function checkWin()
 resetBoard
 assignSymbolAndToss
 displayBoard
+
+function playToWin()
+{
+	for (( row=0; row<$ROW; row++ ))
+	do
+		for (( column=0; column<$COLUMN; column++ ))
+		do
+			if [ ${board[$row,$column]} == "-" ]
+			then
+				board[$row,$column]=$computerSymbol
+				checkWin $computerSymbol
+				if [ $win -eq 0  ]
+				then
+					board[$row,$column]="-"
+				fi
+			fi
+		done
+	done
+}
 
 #Switching Player Function
 function switchPlayer()
@@ -131,6 +151,7 @@ do
 		playerTurn=false
 	else
 		echo "Machine Turn"
+		playToWin
 		getRowNumber=$(( RANDOM%3 ))
 		getColumnNumber=$(( RANDOM%3 ))
 		isEmpty $getRowNumber $getColumnNumber $computerSymbol
