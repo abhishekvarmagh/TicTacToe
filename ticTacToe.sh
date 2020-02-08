@@ -11,14 +11,15 @@ declare -A board
 
 moveCount=0
 playerTurn=false
+flag=1
 
 #Resetting the board
 function resetBoard()
 {
 	for (( i=0; i<$ROW; i++ ))
 	do
-   	for (( j=0; j<$COLUMN; j++ ))
-   	do
+		for (( j=0; j<$COLUMN; j++ ))
+		do
 			board[$i,$j]="-"
 		done
 	done
@@ -100,37 +101,47 @@ function checkWin()
 		win=1
 	fi
 
-	if [ $win -eq 1 ]
-	then
-		displayBoard
-		echo "Win"
-		exit
-	elif [ $moveCount -eq $TOTAL_MOVE ]
-	then
-		echo "Tie"
-	fi
 }
 
 resetBoard
 assignSymbolAndToss
 displayBoard
 
-function playToWin()
+#
+function playToWinAndCheckToBlock()
 {
+	flag=1
 	for (( row=0; row<$ROW; row++ ))
 	do
 		for (( column=0; column<$COLUMN; column++ ))
 		do
 			if [ ${board[$row,$column]} == "-" ]
 			then
-				board[$row,$column]=$computerSymbol
-				checkWin $computerSymbol
-				if [ $win -eq 0  ]
+				board[$row,$column]=$1
+				checkWin $1
+				if [ $win -eq 0 ]
 				then
 					board[$row,$column]="-"
+				elif [[ $win -eq 1 && ${board[$row,$column]} == $computerSymbol ]]
+				then
+					displayBoard
+					echo "Win"
+					exit
+				elif [ $win -eq 1 ]
+				then
+					board[$row,$column]=$computerSymbol
+					displayBoard
+					win=0
+					moveCount=$(( moveCount+1 ))
+					flag=0
+					break
 				fi
 			fi
 		done
+		if [ $flag -eq 0 ]
+		then
+			break
+		fi
 	done
 }
 
@@ -151,13 +162,24 @@ do
 		playerTurn=false
 	else
 		echo "Machine Turn"
-		playToWin
-		getRowNumber=$(( RANDOM%3 ))
-		getColumnNumber=$(( RANDOM%3 ))
-		isEmpty $getRowNumber $getColumnNumber $computerSymbol
+		playToWinAndCheckToBlock $computerSymbol
+		playToWinAndCheckToBlock $playerSymbol
+		if [ $flag -eq 1 ]
+		then
+			getRowNumber=$(( RANDOM%3 ))
+			getColumnNumber=$(( RANDOM%3 ))
+			isEmpty $getRowNumber $getColumnNumber $computerSymbol
+		fi
 		playerTurn=true
+	fi
+	if [ $win -eq 1 ]
+	then
+		echo "Win"
+		exit
 	fi
 done
 }
 
 switchPlayer
+echo "Tie"
+
