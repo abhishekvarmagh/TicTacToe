@@ -145,6 +145,31 @@ function playToWinAndCheckToBlock()
 	done
 }
 
+function takeAvailableCorners()
+{
+	if [ $flag -eq 1 ]
+	then
+		for (( i=0; i<$ROW; i=$(( i+2 )) ))
+		do
+			for (( j=0; j<$COLUMN; j=$(( j+2 )) ))
+			do
+				if [[ ${board[$i,$j]} == "-" ]]
+				then
+					board[$i,$j]=$computerSymbol
+					displayBoard
+					moveCount=$(( moveCount+1 ))
+					flag=0
+					break
+				fi
+			done
+			if [ $flag -eq 0 ]
+			then
+				break
+			fi
+		done
+	fi
+}
+
 #Switching Player Function
 function switchPlayer()
 {
@@ -164,6 +189,7 @@ do
 		echo "Machine Turn"
 		playToWinAndCheckToBlock $computerSymbol
 		playToWinAndCheckToBlock $playerSymbol
+		takeAvailableCorners $computerSymbol
 		if [ $flag -eq 1 ]
 		then
 			getRowNumber=$(( RANDOM%3 ))
@@ -182,4 +208,3 @@ done
 
 switchPlayer
 echo "Tie"
-
