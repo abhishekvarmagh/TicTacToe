@@ -168,6 +168,11 @@ function takeAvailableCorners()
 			fi
 		done
 	fi
+	if [ $flag -eq 1 ]
+	then
+		board[1,1]=$computerSymbol
+		flag=0
+	fi
 }
 
 #Switching Player Function
