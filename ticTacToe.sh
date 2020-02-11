@@ -103,11 +103,7 @@ function checkWin()
 
 }
 
-resetBoard
-assignSymbolAndToss
-displayBoard
-
-#
+#Check either if you can win or play to block opponent
 function playToWinAndCheckToBlock()
 {
 	flag=1
@@ -115,7 +111,7 @@ function playToWinAndCheckToBlock()
 	do
 		for (( column=0; column<$COLUMN; column++ ))
 		do
-			if [ ${board[$row,$column]} == "-" ]
+			if [[ ${board[$row,$column]} == "-" ]]
 			then
 				board[$row,$column]=$1
 				checkWin $1
@@ -145,7 +141,8 @@ function playToWinAndCheckToBlock()
 	done
 }
 
-function takeAvailableCorners()
+#Check if neither one is winning then try to occupy corners, center or sides
+function takeAvailableCornersCenterOrSides()
 {
 	if [ $flag -eq 1 ]
 	then
@@ -170,8 +167,33 @@ function takeAvailableCorners()
 	fi
 	if [ $flag -eq 1 ]
 	then
-		board[1,1]=$computerSymbol
-		flag=0
+		if [[ ${board[1,1]} == "-" ]]
+		then
+			board[1,1]=$computerSymbol
+			displayBoard
+			moveCount=$(( moveCount+1 ))
+			flag=0
+		fi
+	fi
+	if [ $flag -eq 1 ]
+	then
+		for (( i=0; i<$ROW; i=$(( i+2 )) ))
+		do
+			j=1
+			if [[ ${board[$i,$j]} == "-" ]]
+			then
+				board[$i,$j]=$computerSymbol
+				displayBoard
+				moveCount=$(( moveCount+1 ))
+				break
+			elif [[ ${board[$j,$i]} == "-" ]]
+			then
+				board[$j,$i]=$computerSymbol
+				displayBoard
+				moveCount=$(( moveCount+1 ))
+				break
+			fi
+		done
 	fi
 }
 
@@ -194,13 +216,7 @@ do
 		echo "Machine Turn"
 		playToWinAndCheckToBlock $computerSymbol
 		playToWinAndCheckToBlock $playerSymbol
-		takeAvailableCorners $computerSymbol
-		if [ $flag -eq 1 ]
-		then
-			getRowNumber=$(( RANDOM%3 ))
-			getColumnNumber=$(( RANDOM%3 ))
-			isEmpty $getRowNumber $getColumnNumber $computerSymbol
-		fi
+		takeAvailableCornersCenterOrSides $computerSymbol
 		playerTurn=true
 	fi
 	if [ $win -eq 1 ]
@@ -211,5 +227,8 @@ do
 done
 }
 
+resetBoard
+assignSymbolAndToss
+displayBoard
 switchPlayer
 echo "Tie"
