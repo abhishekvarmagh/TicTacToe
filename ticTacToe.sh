@@ -9,9 +9,9 @@ TOTAL_MOVE=$(( ROW*COLUMN ))
 
 declare -A board
 
+#Variables
 moveCount=0
 playerTurn=false
-flag=1
 
 #Resetting the board
 function resetBoard()
@@ -69,7 +69,6 @@ function isEmpty()
 		board[$row,$column]=$letter
 		displayBoard
 		moveCount=$(( moveCount+1 ))
-		checkWin $letter
 	else
 		echo "cell already occupied"
 		switchPlayer
@@ -85,60 +84,88 @@ function checkWin()
 		if [[ ${board[$i,$(( i-i ))]} == $1 && ${board[$i,$(( i+1-i ))]} == $1 && ${board[$i,$(( i+2-i))]} == $1 ]]
 		then
 			win=1
-		fi
-		if [[ ${board[$(( i-i )),$i]} == $1 && ${board[$(( i+1-i )),$i]} == $1 && ${board[$(( i+2-i )),$i]} == $1 ]]
+		elif [[ ${board[$(( i-i )),$i]} == $1 && ${board[$(( i+1-i )),$i]} == $1 && ${board[$(( i+2-i )),$i]} == $1 ]]
+		then
+			win=1
+		elif [[ $i -eq 0 && ${board[$i,$i]} == $1 && ${board[$(( i+1 )),$(( i+1 ))]} == $1 && ${board[$(( i+2 )),$(( i+2 ))]} == $1 ]]
+		then
+			win=1
+		elif [[ ${board[0,2]} == $1 && ${board[1,1]} == $1 && ${board[2,0]} == $1 ]]
 		then
 			win=1
 		fi
 	done
-
-	if [[ ${board[0,0]} == $1 && ${board[1,1]} == $1 && ${board[2,2]} == $1 ]]
-	then
-		win=1
-	fi
-	if [[ ${board[0,2]} == $1 && ${board[1,1]} == $1 && ${board[2,0]} == $1 ]]
-	then
-		win=1
-	fi
-
 }
 
-#Check either if you can win or play to block opponent
-function playToWinAndCheckToBlock()
+#Check if you can win
+function playToWin()
 {
 	flag=1
+	if [ $moveCount -gt 3 ]
+	then
+		for (( row=0; row<$ROW; row++ ))
+		do
+			for (( column=0; column<$COLUMN; column++ ))
+			do
+				if [[ ${board[$row,$column]} == "-" ]]
+				then
+					board[$row,$column]=$1
+					checkWin $1
+					if [[ $win -eq 1 ]]
+					then
+						displayBoard
+						echo "Win"
+						exit
+					else
+						board[$row,$column]="-"
+					fi
+				fi
+			done
+		done
+	fi
+}
+
+#Check if you can block the opponent
+function checkToBlock()
+{
 	for (( row=0; row<$ROW; row++ ))
-	do
+	 do
 		for (( column=0; column<$COLUMN; column++ ))
 		do
 			if [[ ${board[$row,$column]} == "-" ]]
 			then
 				board[$row,$column]=$1
 				checkWin $1
-				if [ $win -eq 0 ]
-				then
-					board[$row,$column]="-"
-				elif [[ $win -eq 1 && ${board[$row,$column]} == $computerSymbol ]]
-				then
-					displayBoard
-					echo "Win"
-					exit
-				elif [ $win -eq 1 ]
+				if [ $win -eq 1 ]
 				then
 					board[$row,$column]=$computerSymbol
 					displayBoard
-					win=0
 					moveCount=$(( moveCount+1 ))
+					win=0
 					flag=0
-					break
+					return
+				else
+					board[$row,$column]="-"
 				fi
 			fi
 		done
-		if [ $flag -eq 0 ]
-		then
-			break
-		fi
 	done
+}
+
+#Occupying the available corner, center or sides 
+function setCornerCenterOrSides()
+{
+	local row=$1
+	local column=$2
+	local letter=$3
+	if [[ ${board[$row,$column]} == "-" ]]
+	then
+		board[$row,$column]=$letter
+		displayBoard
+		moveCount=$(( moveCount+1 ))
+		playerTurn=true
+		switchPlayer
+	fi
 }
 
 #Check if neither one is winning then try to occupy corners, center or sides
@@ -146,53 +173,20 @@ function takeAvailableCornersCenterOrSides()
 {
 	if [ $flag -eq 1 ]
 	then
-		for (( i=0; i<$ROW; i=$(( i+2 )) ))
+		for (( i=0; i<$ROW; i=$(( i+ROW-1 )) ))
 		do
-			for (( j=0; j<$COLUMN; j=$(( j+2 )) ))
+			for (( j=0; j<$COLUMN; j=$(( j+COLUMN-1 )) ))
 			do
-				if [[ ${board[$i,$j]} == "-" ]]
-				then
-					board[$i,$j]=$computerSymbol
-					displayBoard
-					moveCount=$(( moveCount+1 ))
-					flag=0
-					break
-				fi
+				setCornerCenterOrSides $i $j $computerSymbol
 			done
-			if [ $flag -eq 0 ]
-			then
-				break
-			fi
 		done
-	fi
-	if [ $flag -eq 1 ]
-	then
-		if [[ ${board[1,1]} == "-" ]]
-		then
-			board[1,1]=$computerSymbol
-			displayBoard
-			moveCount=$(( moveCount+1 ))
-			flag=0
-		fi
-	fi
-	if [ $flag -eq 1 ]
-	then
-		for (( i=0; i<$ROW; i=$(( i+2 )) ))
+		setCornerCenterOrSides $(( ROW/2 )) $(( COLUMN/2 )) $computerSymbol
+		for (( i=0; i<$ROW; i++ ))
 		do
-			j=1
-			if [[ ${board[$i,$j]} == "-" ]]
-			then
-				board[$i,$j]=$computerSymbol
-				displayBoard
-				moveCount=$(( moveCount+1 ))
-				break
-			elif [[ ${board[$j,$i]} == "-" ]]
-			then
-				board[$j,$i]=$computerSymbol
-				displayBoard
-				moveCount=$(( moveCount+1 ))
-				break
-			fi
+			for (( j=0; j<$COLUMN; j++ ))
+			do
+				setCornerCenterOrSides $i $j $computerSymbol
+			done
 		done
 	fi
 }
@@ -205,17 +199,22 @@ do
 	if [[ $playerTurn == true ]]
 	then
 		read -p "Enter row (0-2) and column (0-2) number : " rowNumber columnNumber
-		if [[ $rowNumber -gt 2 || $columnNumber -gt 2 ]]
+		if [[ $rowNumber -gt 2 ]]
 		then
-			echo "Invalid row or column number entered"
+			echo "Invalid row"
+			switchPlayer
+		elif [[ $columnNumber -gt 2 ]]
+		then
+			echo "Invalid column"
 			switchPlayer
 		fi
 		isEmpty $rowNumber $columnNumber $playerSymbol
+		checkWin $playerSymbol
 		playerTurn=false
 	else
 		echo "Machine Turn"
-		playToWinAndCheckToBlock $computerSymbol
-		playToWinAndCheckToBlock $playerSymbol
+		playToWin $computerSymbol
+		checkToBlock $playerSymbol
 		takeAvailableCornersCenterOrSides $computerSymbol
 		playerTurn=true
 	fi
